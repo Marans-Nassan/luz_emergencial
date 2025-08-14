@@ -26,7 +26,8 @@ add_executable(luz_auto
                luz_auto.c 
                lib/bh1750_light_sensor.c
                lib/ssd1306.c
-               lib/matriz.c)
+               lib/matriz.c
+               lib/i2c.c)
 
 include_directories( ${CMAKE_SOURCE_DIR}/lib ) # Inclui os files .h na pasta lib
 
