@@ -33,8 +33,7 @@ int main(){
         luz = bh1750_read_measurement(i2c_port0);
         snprintf(str_luz, sizeof(str_luz), "Luz = %d", luz);
         printf("Luz atual: %d\n", luz);
-        if(luz < 20) matriz(255, 255, 255);
-        else matriz(0, 0, 0);
+        (luz < 20) ? matriz(255, 255, 255) : matriz(0, 0, 0);
         sleep_ms(200);
     }
 }
