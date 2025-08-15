@@ -2,6 +2,7 @@
 #include <math.h>
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
+#include "hardware/clocks.h"
 #include "hardware/i2c.h"
 #include "ssd1306.h"
 #include "font.h"
@@ -20,19 +21,21 @@ void display_core(void);
 void oledinit(void);
 
 int main(){
+    set_sys_clock_khz(48000, true);
     stdio_init_all();
     init_i2c0();
     multicore_launch_core1(display_core);
     matriz_init(matriz_led);
     bh1750_power_on(i2c_port0);
-    
+    sleep_ms(1000);
+
     while (true) {
         luz = bh1750_read_measurement(i2c_port0);
         snprintf(str_luz, sizeof(str_luz), "Luz = %d", luz);
         printf("Luz atual: %d\n", luz);
         if(luz < 20) matriz(255, 255, 255);
         else matriz(0, 0, 0);
-        sleep_ms(1000);
+        sleep_ms(200);
     }
 }
 
