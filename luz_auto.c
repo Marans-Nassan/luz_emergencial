@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "pico/stdlib.h"
+#include "pico/time.h"
 #include "pico/multicore.h"
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
@@ -14,6 +15,8 @@
 #define endereco 0x3c
 
 uint32_t luz = 0;
+bool escuroDetectado = false;
+unsigned long tempoPrimeiraDeteccao = 0;
 char str_luz [16];
 ssd1306_t ssd;
 
@@ -33,7 +36,21 @@ int main(){
         luz = bh1750_read_measurement(i2c_port0);
         snprintf(str_luz, sizeof(str_luz), "Luz = %d", luz);
         printf("Luz atual: %d\n", luz);
-        (luz < 20) ? matriz(255, 255, 255) : matriz(0, 0, 0);
+        
+        if (luz < 20) {
+            if (!escuroDetectado) {
+                escuroDetectado = true;
+                tempoPrimeiraDeteccao = to_ms_since_boot(get_absolute_time());
+                printf("Escuro detectado!\n");
+            } else if (escuroDetectado && (to_ms_since_boot(get_absolute_time()) - tempoPrimeiraDeteccao) > 3000) {
+                matriz(1, 1, 1);
+                // buzzer
+            }
+        } else {
+            escuroDetectado = false;
+            matriz(0, 0, 0);
+        }
+        
         sleep_ms(200);
     }
 }
