@@ -10,6 +10,7 @@
 #include "bh1750_light_sensor.h"
 #include "matriz.h"
 #include "i2c.h"
+#include "string.h"
 
 #define matriz_led 7
 #define endereco 0x3c
@@ -62,11 +63,12 @@ void display_core(void){
     init_i2c1();
     oledinit();
     while(true){
+        ssd1306_fill(&ssd, false);
         ssd1306_draw_string(&ssd, "Luz", xcenter_pos("Luz"), 2);
         ssd1306_draw_string(&ssd, "Emergencial", xcenter_pos("Emergencial"), 10);
         ssd1306_hline(&ssd, 0, WIDTH-1,  20, true);
         ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28);
-        (luz_alta) ? ssd1306_draw_string(&ssd, "Alta", xcenter_pos("Alta"), 40) : ssd1306_draw_string(&ssd, "Baixa", xcenter_pos("Baixa"), 40);
+        escuroDetectado ? ssd1306_draw_string(&ssd, "Escuro", xcenter_pos("Escuro"), 40) : ssd1306_draw_string(&ssd, "Claro", xcenter_pos("Claro"), 40);
         ssd1306_draw_string(&ssd, "Modo manual:OFF", xcenter_pos("Modo manual:OFF"), 54);
         ssd1306_send_data(&ssd);
         sleep_ms(50);
