@@ -15,14 +15,15 @@
 
 #define matriz_led 7
 #define endereco 0x3c
+#define BUTTON_PIN 5
 
 uint32_t luz = 0;
 bool escuroDetectado = false;
 unsigned long tempoPrimeiraDeteccao = 0;
-char str_luz [16];
+char str_luz[16];
 ssd1306_t ssd;
-
 bool luz_alta = false;
+bool modoManual = false;
 
 void display_core(void);
 void oledinit(void);
@@ -35,6 +36,9 @@ int main(){
     multicore_launch_core1(display_core);
     matriz_init(matriz_led);
     bh1750_power_on(i2c_port0);
+    gpio_init(BUTTON_PIN);
+    gpio_set_dir(BUTTON_PIN, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN);
     sleep_ms(1000);
 
     while (true) {
@@ -42,22 +46,40 @@ int main(){
         snprintf(str_luz, sizeof(str_luz), "Nivel = %d", luz);
         printf("Luz atual: %d\n", luz);
         
-        if (luz < 20) {
-            if (!escuroDetectado) {
-                escuroDetectado = true;
-                tempoPrimeiraDeteccao = to_ms_since_boot(get_absolute_time());
-                printf("Escuro detectado!\n");
-            } else if (escuroDetectado && (to_ms_since_boot(get_absolute_time()) - tempoPrimeiraDeteccao) > 3000) {
+        // Verifica se o botão foi pressionado para alternar modo manual
+        if (!gpio_get(BUTTON_PIN)) {
+            modoManual = !modoManual;
+            sleep_ms(100); // Debounce
+            while (!gpio_get(BUTTON_PIN)); // Aguarda soltar o botão
+            sleep_ms(100); // Debounce
+        }
+
+        if (modoManual) {
+            // Modo manual: luz acende/desliga com o botão
+            if (luz_alta) {
                 matriz(1, 1, 1);
-                for(int i = 0; i < 3; i++){
-                controlaBuzzer(BUZZER_PIN, 150); //buzzer
-                controlaBuzzer(BUZZER_PIN, 0);
-            }
+            } else {
+                matriz(0, 0, 0);
             }
         } else {
-            escuroDetectado = false;
-            matriz(0, 0, 0);
-        }        
+            // Modo automático
+            if (luz < 20) {
+                if (!escuroDetectado) {
+                    escuroDetectado = true;
+                    tempoPrimeiraDeteccao = to_ms_since_boot(get_absolute_time());
+                    printf("Escuro detectado!\n");
+                } else if (escuroDetectado && (to_ms_since_boot(get_absolute_time()) - tempoPrimeiraDeteccao) > 3000) {
+                    matriz(1, 1, 1);
+                    for(int i = 0; i < 3; i++){
+                        controlaBuzzer(BUZZER_PIN, 150);
+                        controlaBuzzer(BUZZER_PIN, 0);
+                    }
+                }
+            } else {
+                escuroDetectado = false;
+                matriz(0, 0, 0);
+            }
+        }
         sleep_ms(200);
     }
 }
@@ -69,10 +91,10 @@ void display_core(void){
         ssd1306_fill(&ssd, false);
         ssd1306_draw_string(&ssd, "Luz", xcenter_pos("Luz"), 2);
         ssd1306_draw_string(&ssd, "Emergencial", xcenter_pos("Emergencial"), 10);
-        ssd1306_hline(&ssd, 0, WIDTH-1,  20, true);
+        ssd1306_hline(&ssd, 0, WIDTH-1, 20, true);
         ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28);
         escuroDetectado ? ssd1306_draw_string(&ssd, "Escuro", xcenter_pos("Escuro"), 40) : ssd1306_draw_string(&ssd, "Claro", xcenter_pos("Claro"), 40);
-        ssd1306_draw_string(&ssd, "Modo manual:OFF", xcenter_pos("Modo manual:OFF"), 54);
+        ssd1306_draw_string(&ssd, modoManual ? "Modo manual:ON" : "Modo manual:OFF", xcenter_pos(modoManual ? "Modo manual:ON" : "Modo manual:OFF"), 54);
         ssd1306_send_data(&ssd);
         sleep_ms(50);
     }
@@ -86,5 +108,5 @@ void oledinit(void){
 }
 
 uint8_t xcenter_pos(char* text) {
-    return (WIDTH - 8 * strlen(text)) / 2; // Calcula a posição centralizada
+    return (WIDTH - 8 * strlen(text)) / 2;
 }
