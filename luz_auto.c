@@ -15,7 +15,8 @@
 
 #define matriz_led 7
 #define endereco 0x3c
-#define BUTTON_PIN 5
+#define BUTTON_PIN_A 5
+#define BUTTON_PIN_B 6
 
 uint32_t luz = 0;
 bool escuroDetectado = false;
@@ -36,9 +37,12 @@ int main(){
     multicore_launch_core1(display_core);
     matriz_init(matriz_led);
     bh1750_power_on(i2c_port0);
-    gpio_init(BUTTON_PIN);
-    gpio_set_dir(BUTTON_PIN, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN);
+    gpio_init(BUTTON_PIN_A);
+    gpio_set_dir(BUTTON_PIN_A, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN_A);
+    gpio_init(BUTTON_PIN_B);
+    gpio_set_dir(BUTTON_PIN_B, GPIO_IN);
+    gpio_pull_up(BUTTON_PIN_B);
     sleep_ms(1000);
 
     while (true) {
@@ -46,15 +50,23 @@ int main(){
         snprintf(str_luz, sizeof(str_luz), "Nivel = %d", luz);
         printf("Luz atual: %d\n", luz);
         
-        if (!gpio_get(BUTTON_PIN)) {
-            if (modoManual) {
-                luz_alta = !luz_alta;
-            } else {
+        // Verifica os botões
+        if (!gpio_get(BUTTON_PIN_A)) {
+            if (!modoManual) {
                 modoManual = true;
+            } else {
+                luz_alta = !luz_alta;
             }
-            sleep_ms(50); // Debounce
-            while (!gpio_get(BUTTON_PIN)); // Aguarda soltar o botão
-            sleep_ms(50); // Debounce
+            sleep_ms(200); // Debounce
+            while (!gpio_get(BUTTON_PIN_A)); // Aguarda soltar o botão
+            sleep_ms(200); // Debounce
+        }
+        if (!gpio_get(BUTTON_PIN_B)) {
+            modoManual = false; // Volta ao modo automático ao pressionar Botão B
+            luz_alta = false;
+            sleep_ms(200); // Debounce
+            while (!gpio_get(BUTTON_PIN_B)); // Aguarda soltar o botão
+            sleep_ms(200); // Debounce
         }
 
         if (modoManual) {
@@ -93,8 +105,7 @@ void display_core(void){
         ssd1306_draw_string(&ssd, "Luz", xcenter_pos("Luz"), 2);
         ssd1306_draw_string(&ssd, "Emergencial", xcenter_pos("Emergencial"), 10);
         ssd1306_hline(&ssd, 0, WIDTH-1, 20, true);
-        ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28); // Nível de luz
-        // Exibe o estado do ambiente ou luz manual
+        ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28);
         if (modoManual) {
             ssd1306_draw_string(&ssd, luz_alta ? "Luz: ON" : "Luz: OFF", xcenter_pos(luz_alta ? "Luz: ON" : "Luz: OFF"), 40);
         } else {
