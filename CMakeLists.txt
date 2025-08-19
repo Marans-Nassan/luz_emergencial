@@ -38,6 +38,7 @@ target_link_libraries(${PROJECT_NAME}
         pico_multicore
         hardware_i2c
         hardware_pio
+        hardware_pwm
         )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

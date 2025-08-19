@@ -5,6 +5,7 @@
 #include "pico/multicore.h"
 #include "hardware/clocks.h"
 #include "hardware/i2c.h"
+#include "lib/pwm_config.h"
 #include "ssd1306.h"
 #include "font.h"
 #include "bh1750_light_sensor.h"
@@ -48,13 +49,15 @@ int main(){
                 printf("Escuro detectado!\n");
             } else if (escuroDetectado && (to_ms_since_boot(get_absolute_time()) - tempoPrimeiraDeteccao) > 3000) {
                 matriz(1, 1, 1);
-                // buzzer
+                for(int i = 0; i < 3; i++){
+                controlaBuzzer(BUZZER_PIN, 150); //buzzer
+                controlaBuzzer(BUZZER_PIN, 0);
+            }
             }
         } else {
             escuroDetectado = false;
             matriz(0, 0, 0);
-        }
-        
+        }        
         sleep_ms(200);
     }
 }
