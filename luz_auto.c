@@ -46,27 +46,24 @@ int main(){
         snprintf(str_luz, sizeof(str_luz), "Nivel = %d", luz);
         printf("Luz atual: %d\n", luz);
         
-        // Verifica se o botão foi pressionado para alternar modo manual e luz_alta
         if (!gpio_get(BUTTON_PIN)) {
             if (modoManual) {
-                luz_alta = !luz_alta; // Alterna o estado de luz_alta no modo manual
+                luz_alta = !luz_alta;
             } else {
-                modoManual = true; // Ativa modo manual se ainda não estiver ativo
+                modoManual = true;
             }
-            sleep_ms(200); // Debounce
+            sleep_ms(50); // Debounce
             while (!gpio_get(BUTTON_PIN)); // Aguarda soltar o botão
-            sleep_ms(200); // Debounce
+            sleep_ms(50); // Debounce
         }
 
         if (modoManual) {
-            // Modo manual: luz acende/desliga com base em luz_alta
             if (luz_alta) {
                 matriz(1, 1, 1);
             } else {
                 matriz(0, 0, 0);
             }
         } else {
-            // Modo automático
             if (luz < 20) {
                 if (!escuroDetectado) {
                     escuroDetectado = true;
@@ -96,9 +93,14 @@ void display_core(void){
         ssd1306_draw_string(&ssd, "Luz", xcenter_pos("Luz"), 2);
         ssd1306_draw_string(&ssd, "Emergencial", xcenter_pos("Emergencial"), 10);
         ssd1306_hline(&ssd, 0, WIDTH-1, 20, true);
-        ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28);
-        escuroDetectado ? ssd1306_draw_string(&ssd, "Escuro", xcenter_pos("Escuro"), 40) : ssd1306_draw_string(&ssd, "Claro", xcenter_pos("Claro"), 40);
-        ssd1306_draw_string(&ssd, modoManual ? (luz_alta ? "Luz: ON" : "Luz: OFF") : "Modo manual:OFF", xcenter_pos(modoManual ? (luz_alta ? "Luz: ON" : "Luz: OFF") : "Modo manual:OFF"), 54);
+        ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28); // Nível de luz
+        // Exibe o estado do ambiente ou luz manual
+        if (modoManual) {
+            ssd1306_draw_string(&ssd, luz_alta ? "Luz: ON" : "Luz: OFF", xcenter_pos(luz_alta ? "Luz: ON" : "Luz: OFF"), 40);
+        } else {
+            escuroDetectado ? ssd1306_draw_string(&ssd, "Escuro", xcenter_pos("Escuro"), 40) : ssd1306_draw_string(&ssd, "Claro", xcenter_pos("Claro"), 40);
+        }
+        ssd1306_draw_string(&ssd, modoManual ? "Modo manual:ON" : "Modo manual:OFF", xcenter_pos(modoManual ? "Modo manual:ON" : "Modo manual:OFF"), 54);
         ssd1306_send_data(&ssd);
         sleep_ms(50);
     }
