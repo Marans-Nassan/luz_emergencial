@@ -46,16 +46,20 @@ int main(){
         snprintf(str_luz, sizeof(str_luz), "Nivel = %d", luz);
         printf("Luz atual: %d\n", luz);
         
-        // Verifica se o botão foi pressionado para alternar modo manual
+        // Verifica se o botão foi pressionado para alternar modo manual e luz_alta
         if (!gpio_get(BUTTON_PIN)) {
-            modoManual = !modoManual;
-            sleep_ms(100); // Debounce
+            if (modoManual) {
+                luz_alta = !luz_alta; // Alterna o estado de luz_alta no modo manual
+            } else {
+                modoManual = true; // Ativa modo manual se ainda não estiver ativo
+            }
+            sleep_ms(200); // Debounce
             while (!gpio_get(BUTTON_PIN)); // Aguarda soltar o botão
-            sleep_ms(100); // Debounce
+            sleep_ms(200); // Debounce
         }
 
         if (modoManual) {
-            // Modo manual: luz acende/desliga com o botão
+            // Modo manual: luz acende/desliga com base em luz_alta
             if (luz_alta) {
                 matriz(1, 1, 1);
             } else {
@@ -94,7 +98,7 @@ void display_core(void){
         ssd1306_hline(&ssd, 0, WIDTH-1, 20, true);
         ssd1306_draw_string(&ssd, str_luz, xcenter_pos(str_luz), 28);
         escuroDetectado ? ssd1306_draw_string(&ssd, "Escuro", xcenter_pos("Escuro"), 40) : ssd1306_draw_string(&ssd, "Claro", xcenter_pos("Claro"), 40);
-        ssd1306_draw_string(&ssd, modoManual ? "Modo manual:ON" : "Modo manual:OFF", xcenter_pos(modoManual ? "Modo manual:ON" : "Modo manual:OFF"), 54);
+        ssd1306_draw_string(&ssd, modoManual ? (luz_alta ? "Luz: ON" : "Luz: OFF") : "Modo manual:OFF", xcenter_pos(modoManual ? (luz_alta ? "Luz: ON" : "Luz: OFF") : "Modo manual:OFF"), 54);
         ssd1306_send_data(&ssd);
         sleep_ms(50);
     }
