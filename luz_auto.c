@@ -50,7 +50,7 @@ int main(){
             } else if (escuroDetectado && (to_ms_since_boot(get_absolute_time()) - tempoPrimeiraDeteccao) > 3000) {
                 matriz(1, 1, 1);
                 for(int i = 0; i < 3; i++){
-                controlaBuzzer(BUZZER_PIN, 150);
+                controlaBuzzer(BUZZER_PIN, 150); //buzzer
                 controlaBuzzer(BUZZER_PIN, 0);
             }
             }
